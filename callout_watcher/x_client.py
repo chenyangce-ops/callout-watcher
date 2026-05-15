@@ -30,7 +30,7 @@ class XClient:
             params={"user.fields": "id,username"},
             timeout=20,
         )
-        response.raise_for_status()
+        _raise_for_status(response)
         data = response.json().get("data")
         if not data or "id" not in data:
             raise ValueError(f"X user not found: @{username}")
@@ -65,7 +65,7 @@ class XClient:
             params=params,
             timeout=20,
         )
-        response.raise_for_status()
+        _raise_for_status(response)
         data = response.json().get("data", [])
         posts = []
         for item in data:
@@ -111,7 +111,7 @@ class XClient:
             params=params,
             timeout=20,
         )
-        response.raise_for_status()
+        _raise_for_status(response)
         payload = response.json()
         posts = [self._post_from_api_item(username, item) for item in payload.get("data", [])]
         next_token = payload.get("meta", {}).get("next_token")
@@ -154,3 +154,15 @@ class XClient:
             created_at=created_at,
             url=f"https://x.com/{username}/status/{post_id}",
         )
+
+
+def _raise_for_status(response: requests.Response) -> None:
+    if response.status_code == 402:
+        raise RuntimeError(
+            "X API returned 402 Payment Required. Add API credits or enable billing in the X Developer Console."
+        )
+    if response.status_code == 401:
+        raise RuntimeError("X API returned 401 Unauthorized. Check X_BEARER_TOKEN in .env.")
+    if response.status_code == 429:
+        raise RuntimeError("X API returned 429 Too Many Requests. Wait for the rate limit window to reset.")
+    response.raise_for_status()
