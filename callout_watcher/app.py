@@ -33,15 +33,26 @@ def run_once(config_path: Path, state_path: Path) -> None:
     for account in config.accounts:
         username = account.username
         since_id = state.get_since_id(username)
-        user_id = x_client.get_user_id(username)
-        posts = x_client.get_latest_posts(
-            username=username,
-            user_id=user_id,
-            since_id=since_id,
-            include_replies=config.classification.include_replies,
-            include_retweets=config.classification.include_retweets,
-        )
-        LOGGER.info("fetched %s posts for @%s", len(posts), username)
+        if config.stock_search.enabled:
+            posts = x_client.search_recent_posts(
+                username=username,
+                keywords=config.stock_search.keywords,
+                since_id=since_id,
+                max_results=config.stock_search.max_results,
+                exclude_replies=config.stock_search.exclude_replies,
+                exclude_retweets=config.stock_search.exclude_retweets,
+            )
+            LOGGER.info("searched %s stock-related posts for @%s", len(posts), username)
+        else:
+            user_id = x_client.get_user_id(username)
+            posts = x_client.get_latest_posts(
+                username=username,
+                user_id=user_id,
+                since_id=since_id,
+                include_replies=config.classification.include_replies,
+                include_retweets=config.classification.include_retweets,
+            )
+            LOGGER.info("fetched %s posts for @%s", len(posts), username)
         for post in posts:
             result = classifier.classify(post.text)
             if result.is_callout:

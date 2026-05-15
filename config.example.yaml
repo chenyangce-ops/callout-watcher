@@ -47,3 +47,36 @@ notifications:
     chat_id_env: TELEGRAM_CHAT_ID
   discord:
     webhook_url_env: DISCORD_WEBHOOK_URL
+
+stock_search:
+  # When enabled, the watcher uses X recent search instead of reading the full
+  # user timeline. This is useful when you only want stock-related posts.
+  enabled: false
+  max_results: 10
+  exclude_replies: true
+  exclude_retweets: true
+  keywords:
+    - 股票
+    - 美股
+    - A股
+    - 港股
+    - 中概
+    - 纳指
+    - 标普
+    - 道指
+    - 财报
+    - 降息
+    - 加息
+    - NVDA
+    - TSLA
+    - AAPL
+    - MSFT
+    - META
+    - AMZN
+    - GOOGL
+    - COIN
+    - MSTR
+    - SPY
+    - QQQ
+    - TQQQ
+    - SOXL

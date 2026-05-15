@@ -42,11 +42,21 @@ class NotificationConfig:
 
 
 @dataclass(frozen=True)
+class StockSearchConfig:
+    enabled: bool = False
+    max_results: int = 10
+    exclude_replies: bool = True
+    exclude_retweets: bool = True
+    keywords: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class AppConfig:
     poll_interval_seconds: int
     accounts: tuple[Account, ...]
     classification: ClassificationConfig
     notifications: NotificationConfig
+    stock_search: StockSearchConfig
 
 
 def load_config(path: str | Path) -> AppConfig:
@@ -62,6 +72,7 @@ def load_config(path: str | Path) -> AppConfig:
     notifications_raw: dict[str, Any] = raw.get("notifications", {})
     telegram_raw: dict[str, Any] = notifications_raw.get("telegram", {})
     discord_raw: dict[str, Any] = notifications_raw.get("discord", {})
+    stock_search_raw: dict[str, Any] = raw.get("stock_search", {})
 
     return AppConfig(
         poll_interval_seconds=int(raw.get("poll_interval_seconds", 120)),
@@ -83,5 +94,12 @@ def load_config(path: str | Path) -> AppConfig:
             discord=DiscordConfig(
                 webhook_url_env=str(discord_raw.get("webhook_url_env", "DISCORD_WEBHOOK_URL")),
             ),
+        ),
+        stock_search=StockSearchConfig(
+            enabled=bool(stock_search_raw.get("enabled", False)),
+            max_results=int(stock_search_raw.get("max_results", 10)),
+            exclude_replies=bool(stock_search_raw.get("exclude_replies", True)),
+            exclude_retweets=bool(stock_search_raw.get("exclude_retweets", True)),
+            keywords=tuple(stock_search_raw.get("keywords", [])),
         ),
     )

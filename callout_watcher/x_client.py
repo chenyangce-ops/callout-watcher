@@ -143,6 +143,42 @@ class XClient:
                 break
         return posts
 
+    def search_recent_posts(
+        self,
+        username: str,
+        keywords: tuple[str, ...],
+        since_id: str | None = None,
+        max_results: int = 10,
+        exclude_replies: bool = True,
+        exclude_retweets: bool = True,
+    ) -> list[Post]:
+        if not keywords:
+            raise ValueError("stock_search.keywords must include at least one keyword")
+
+        query_parts = [f"from:{username}", "(" + " OR ".join(keywords) + ")"]
+        if exclude_replies:
+            query_parts.append("-is:reply")
+        if exclude_retweets:
+            query_parts.append("-is:retweet")
+
+        params: dict[str, Any] = {
+            "query": " ".join(query_parts),
+            "max_results": max(10, min(max_results, 100)),
+            "tweet.fields": "created_at,author_id",
+        }
+        if since_id:
+            params["since_id"] = since_id
+
+        response = self.session.get(
+            f"{API_BASE}/tweets/search/recent",
+            params=params,
+            timeout=20,
+        )
+        _raise_for_status(response)
+        payload = response.json()
+        posts = [self._post_from_api_item(username, item) for item in payload.get("data", [])]
+        return sorted(posts, key=lambda post: int(post.id))
+
     @staticmethod
     def _post_from_api_item(username: str, item: dict[str, Any]) -> Post:
         created_at = datetime.fromisoformat(item["created_at"].replace("Z", "+00:00"))

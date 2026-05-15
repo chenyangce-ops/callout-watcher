@@ -113,6 +113,35 @@ python -m callout_watcher.app
 python -m callout_watcher.app --config config.yaml --state .data/state.json
 ```
 
+## 只监控股票相关推文
+
+如果不想读取某个账号的全部新推文，可以打开 `stock_search` 模式。程序会使用 X 搜索接口，只搜索该账号里命中股票关键词的公开推文：
+
+```yaml
+stock_search:
+  enabled: true
+  max_results: 10
+  exclude_replies: true
+  exclude_retweets: true
+  keywords:
+    - 股票
+    - 美股
+    - 财报
+    - NVDA
+    - TSLA
+    - AAPL
+    - MSFT
+    - QQQ
+```
+
+这个模式会生成类似这样的 X 查询：
+
+```text
+from:WallStreet0Name (股票 OR 美股 OR 财报 OR NVDA OR TSLA OR AAPL OR MSFT OR QQQ) -is:reply -is:retweet
+```
+
+注意：这会减少无关推文读取，但仍然会调用 X API 并消耗 credits。X recent search 能搜索的历史范围取决于你的 API 权限。
+
 ## 历史推文分析
 
 分析某个账号历史推文，并输出 Markdown 报告：
