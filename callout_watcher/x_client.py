@@ -79,5 +79,78 @@ class XClient:
                     created_at=created_at,
                     url=f"https://x.com/{username}/status/{post_id}",
                 )
-            )
+        )
         return sorted(posts, key=lambda post: int(post.id))
+
+    def get_posts_page(
+        self,
+        username: str,
+        user_id: str,
+        include_replies: bool,
+        include_retweets: bool,
+        pagination_token: str | None = None,
+        max_results: int = 100,
+    ) -> tuple[list[Post], str | None]:
+        exclude: list[str] = []
+        if not include_replies:
+            exclude.append("replies")
+        if not include_retweets:
+            exclude.append("retweets")
+
+        params: dict[str, Any] = {
+            "max_results": max(5, min(max_results, 100)),
+            "tweet.fields": "created_at",
+        }
+        if pagination_token:
+            params["pagination_token"] = pagination_token
+        if exclude:
+            params["exclude"] = ",".join(exclude)
+
+        response = self.session.get(
+            f"{API_BASE}/users/{user_id}/tweets",
+            params=params,
+            timeout=20,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        posts = [self._post_from_api_item(username, item) for item in payload.get("data", [])]
+        next_token = payload.get("meta", {}).get("next_token")
+        return sorted(posts, key=lambda post: int(post.id)), next_token
+
+    def get_post_history(
+        self,
+        username: str,
+        user_id: str,
+        include_replies: bool,
+        include_retweets: bool,
+        max_pages: int = 10,
+        max_posts: int | None = None,
+    ) -> list[Post]:
+        posts: list[Post] = []
+        next_token: str | None = None
+        for _ in range(max_pages):
+            page, next_token = self.get_posts_page(
+                username=username,
+                user_id=user_id,
+                include_replies=include_replies,
+                include_retweets=include_retweets,
+                pagination_token=next_token,
+            )
+            posts.extend(page)
+            if max_posts and len(posts) >= max_posts:
+                return posts[:max_posts]
+            if not next_token:
+                break
+        return posts
+
+    @staticmethod
+    def _post_from_api_item(username: str, item: dict[str, Any]) -> Post:
+        created_at = datetime.fromisoformat(item["created_at"].replace("Z", "+00:00"))
+        post_id = str(item["id"])
+        return Post(
+            id=post_id,
+            username=username,
+            text=item["text"],
+            created_at=created_at,
+            url=f"https://x.com/{username}/status/{post_id}",
+        )

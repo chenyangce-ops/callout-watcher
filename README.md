@@ -113,6 +113,22 @@ python -m callout_watcher.app
 python -m callout_watcher.app --config config.yaml --state .data/state.json
 ```
 
+## 历史推文分析
+
+分析某个账号历史推文，并输出 Markdown 报告：
+
+```powershell
+python -m callout_watcher.analyze_history --username WallStreet0Name --output .data/WallStreet0Name-report.md --max-pages 10
+```
+
+同时输出 JSON 明细：
+
+```powershell
+python -m callout_watcher.analyze_history --username WallStreet0Name --output .data/WallStreet0Name-report.md --json-output .data/WallStreet0Name-report.json --max-pages 10
+```
+
+`--max-pages` 每页最多 100 条。X API 是否能返回完整历史取决于你的账号权限和接口限制；如果你要“全部历史”，可以把 `--max-pages` 调大，但最终以 X API 实际返回为准。
+
 ## 判断逻辑
 
 有 `OPENAI_API_KEY` 时，程序优先让模型判断是否属于喊单；没有 key 或模型调用失败时，会退回到关键词规则。
