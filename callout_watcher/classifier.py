@@ -45,14 +45,24 @@ class CalloutClassifier:
         normalized = text.lower()
         action_hits = [word for word in self.config.bullish_keywords if word.lower() in normalized]
         asset_hits = self._asset_hits(text)
-        price_or_percent = bool(re.search(r"(\$?\d+(?:\.\d+)?\s?k?\b|\d+(?:\.\d+)?%)", text, re.I))
-        imperative = bool(re.search(r"(buy|long|short|entry|入|买|冲|开多|开空|上车|埋伏)", normalized, re.I))
+        strong_action = bool(
+            re.search(
+                r"(buy|long|short|entry|target|stop loss|tp|sl|开多|开空|做多|做空|买入|卖出|止盈|止损|上车|埋伏)",
+                normalized,
+                re.I,
+            )
+        )
+        specific_asset = any(asset not in {"币", "山寨"} for asset in asset_hits)
+        price_or_percent = bool(
+            re.search(r"(\$[A-Za-z]?\d+(?:\.\d+)?|\d+(?:\.\d+)?%|\b(?:entry|target|tp|sl|止盈|止损|目标)\D{0,10}\d)", text, re.I)
+        )
+        imperative = bool(re.search(r"(buy|long|short|entry|买入|卖出|开多|开空|上车|埋伏)", normalized, re.I))
         score = 0.0
         score += 0.35 if action_hits else 0
         score += 0.3 if asset_hits else 0
         score += 0.2 if price_or_percent else 0
         score += 0.15 if imperative else 0
-        is_callout = score >= self.config.confidence_threshold
+        is_callout = score >= self.config.confidence_threshold and strong_action and (specific_asset or price_or_percent)
         reason = "命中交易动作/资产/价格等规则" if is_callout else "没有足够交易指令特征"
         return Classification(
             is_callout=is_callout,
