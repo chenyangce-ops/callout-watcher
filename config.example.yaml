@@ -1,0 +1,49 @@
+poll_interval_seconds: 120
+
+# X/Twitter handles without @.
+accounts:
+  - username: example_blogger
+    display_name: Example Blogger
+
+classification:
+  # If OPENAI_API_KEY is set, the app uses the model first and falls back to rules
+  # when the API is unavailable. If not set, it uses the rules only.
+  openai_model: gpt-4o-mini
+  confidence_threshold: 0.72
+  include_replies: false
+  include_retweets: false
+  bullish_keywords:
+    - buy
+    - long
+    - entry
+    - target
+    - tp
+    - stop loss
+    - sl
+    - 现货
+    - 合约
+    - 开多
+    - 买入
+    - 目标
+    - 止盈
+    - 止损
+    - 仓位
+  asset_keywords:
+    - BTC
+    - ETH
+    - SOL
+    - BNB
+    - XRP
+    - DOGE
+    - PEPE
+    - 币
+    - 山寨
+
+notifications:
+  # telegram, discord, or console.
+  channel: console
+  telegram:
+    bot_token_env: TELEGRAM_BOT_TOKEN
+    chat_id_env: TELEGRAM_CHAT_ID
+  discord:
+    webhook_url_env: DISCORD_WEBHOOK_URL
